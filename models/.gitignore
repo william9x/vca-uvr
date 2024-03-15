@@ -105,5 +105,6 @@ venv.bak/
 
 .idea/*
 assets/*
-audio/*
+audio/uvr_downloads/*
+audio/uvr_processed/*
 models/*
