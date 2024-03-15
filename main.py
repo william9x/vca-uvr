@@ -24,7 +24,8 @@ logger = logging.getLogger(__name__)
 
 separator = Separator(
     model_file_dir="models",
-    output_dir="output",
+    output_dir=PROCESSED_PATH,
+    output_format="mp3",
     mdx_params={"hop_length": 1024, "segment_size": 256, "overlap": 0.25, "batch_size": 24, "enable_denoise": True},
 )
 separator.load_model(MODEL_PATH)
