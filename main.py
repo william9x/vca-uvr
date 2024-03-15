@@ -8,21 +8,32 @@ from pydantic import BaseModel
 from pytube import YouTube
 from starlette.responses import JSONResponse
 
+DOWNLOAD_PATH = os.getenv("UVR_DOWNLOAD_PATH")
+if DOWNLOAD_PATH is None:
+    DOWNLOAD_PATH = "audio/uvr_downloads"
+
+PROCESSED_PATH = os.getenv("UVR_PROCESSED_PATH")
+if PROCESSED_PATH is None:
+    PROCESSED_PATH = "audio/uvr_processed"
+
+MODEL_PATH = os.getenv("UVR_MODEL_PATH")
+if MODEL_PATH is None:
+    MODEL_PATH = "Kim_Vocal_2.onnx"
+
 logger = logging.getLogger(__name__)
 
 separator = Separator(
     model_file_dir="models",
     output_dir="output",
-    mdx_params={"hop_length": 1024, "segment_size": 256, "overlap": 0.5, "batch_size": 16, "enable_denoise": True},
+    mdx_params={"hop_length": 1024, "segment_size": 256, "overlap": 0.25, "batch_size": 24, "enable_denoise": True},
 )
-separator.load_model("Kim_Vocal_2.onnx")
+separator.load_model(MODEL_PATH)
 app = FastAPI()
 
 
 class UvrInferReq(BaseModel):
     task_id: str
     youtube_path: str
-    output_path: str
     input_path: Path
 
 
@@ -38,9 +49,11 @@ async def uvr_infer(req: UvrInferReq) -> JSONResponse:
     if yt is None:
         return JSONResponse(content={"message": "No downloadable mp4 from provided URL"}, status_code=400)
 
-    downloaded_file = yt.download(output_path=req.output_path)
-    VideoFileClip(downloaded_file).audio.write_audiofile("downloads/out.mp3")
-    separator.separate("downloads/out.mp3")
+    downloaded_file = yt.download(output_path=DOWNLOAD_PATH, filename=f"{req.task_id}.mp4")
+    VideoFileClip(downloaded_file).audio.write_audiofile(f"{DOWNLOAD_PATH}/{req.task_id}.mp3")
+
+    os.mkdir(os.path.join(os.getcwd(), req.task_id))
+    separator.separate(f"{DOWNLOAD_PATH}/{req.task_id}.mp3")
 
     return JSONResponse(content={"message": "Created"}, status_code=201)
 
