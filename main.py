@@ -18,7 +18,7 @@ if PROCESSED_PATH is None:
 
 MODEL_PATH = os.getenv("UVR_MODEL_PATH")
 if MODEL_PATH is None:
-    MODEL_PATH = "Kim_Vocal_2.onnx"
+    MODEL_PATH = "UVR-MDX-NET-Inst_full_292.onnx"
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +30,9 @@ separator = Separator(
 )
 separator.load_model(MODEL_PATH)
 app = FastAPI()
+
+hash = separator.get_model_hash(f"models/{MODEL_PATH}")
+print(f"Model hash: {hash}")
 
 
 class UvrInferReq(BaseModel):
