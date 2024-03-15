@@ -41,21 +41,24 @@ class UvrInferReq(BaseModel):
 async def uvr_infer(req: UvrInferReq) -> JSONResponse:
     print(f"received request: {req}")
 
-    if req.youtube_path is None:
-        separator.separate(req.input_path)
+    try:
+        if req.youtube_path is None:
+            separator.separate(req.input_path)
 
-    yt = YouTube(req.youtube_path)
-    yt = yt.streams.filter(progressive=True, file_extension="mp4").order_by('resolution').last()
-    if yt is None:
-        return JSONResponse(content={"message": "No downloadable mp4 from provided URL"}, status_code=400)
+        yt = YouTube(req.youtube_path)
+        yt = yt.streams.filter(progressive=True, file_extension="mp4").order_by('resolution').last()
+        if yt is None:
+            return JSONResponse(content={"message": "No downloadable mp4 from provided URL"}, status_code=400)
 
-    downloaded_file = yt.download(output_path=DOWNLOAD_PATH, filename=f"{req.task_id}.mp4")
-    VideoFileClip(downloaded_file).audio.write_audiofile(f"{DOWNLOAD_PATH}/{req.task_id}.mp3")
+        downloaded_file = yt.download(output_path=DOWNLOAD_PATH, filename=f"{req.task_id}.mp4")
+        VideoFileClip(downloaded_file).audio.write_audiofile(f"{DOWNLOAD_PATH}/{req.task_id}.mp3")
 
-    os.mkdir(os.path.join(os.getcwd(), req.task_id))
-    separator.separate(f"{DOWNLOAD_PATH}/{req.task_id}.mp3")
+        os.mkdir(os.path.join(os.getcwd(), req.task_id))
+        separator.separate(f"{DOWNLOAD_PATH}/{req.task_id}.mp3")
 
-    return JSONResponse(content={"message": "Created"}, status_code=201)
+        return JSONResponse(content={"message": "Created"}, status_code=201)
+    except Exception as e:
+        return JSONResponse(content={"message": f"UVR error {e}"}, status_code=500)
 
 
 if __name__ == "__main__":
