@@ -51,13 +51,12 @@ async def uvr_infer(req: UvrInferReq) -> JSONResponse:
         if yt is None:
             return JSONResponse(content={"message": "No downloadable mp4 from provided URL"}, status_code=400)
 
-        downloaded_file = yt.download(output_path=DOWNLOAD_PATH, filename=f"{req.task_id}.mp4")
-        VideoFileClip(downloaded_file).audio.write_audiofile(f"{DOWNLOAD_PATH}/{req.task_id}.mp3")
+        file_prefix = req.task_id.replace("-", "_")
+        downloaded_file = yt.download(output_path=DOWNLOAD_PATH, filename=f"{file_prefix}.mp4")
+        VideoFileClip(downloaded_file).audio.write_audiofile(f"{DOWNLOAD_PATH}/{file_prefix}.mp3")
 
-        os.mkdir(os.path.join(os.getcwd(), req.task_id))
-        separator.separate(f"{DOWNLOAD_PATH}/{req.task_id}.mp3")
-
-        return JSONResponse(content={"message": "Created"}, status_code=201)
+        process_files = separator.separate(f"{DOWNLOAD_PATH}/{file_prefix}.mp3")
+        return JSONResponse(content={"message": "Created", "file": f"{process_files[0]}"}, status_code=201)
     except Exception as e:
         return JSONResponse(content={"message": f"UVR error {e}"}, status_code=500)
 
@@ -65,4 +64,4 @@ async def uvr_infer(req: UvrInferReq) -> JSONResponse:
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="0.0.0.0", port=8082)
+    uvicorn.run(app, host="0.0.0.0", port=8080)
