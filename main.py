@@ -5,7 +5,6 @@ from audio_separator.separator import Separator
 from fastapi import FastAPI
 from moviepy.editor import *
 from pydantic import BaseModel
-from pytube import YouTube
 from starlette.responses import JSONResponse
 
 
@@ -16,8 +15,7 @@ def get_env(key, default_val=None):
     return val
 
 
-DOWNLOAD_PATH = get_env("UVR_DOWNLOAD_PATH", "audio/uvr_downloads")
-PROCESSED_PATH = get_env("UVR_PROCESSED_PATH", "audio/uvr_processed")
+PROCESSED_PATH = get_env("UVR_PROCESSED_PATH", "audio/save_uvr")
 MODEL_PATH = get_env("UVR_MODEL_PATH", "Kim_Vocal_2.onnx")
 VIDEO_EXT = get_env("UVR_VIDEO_EXT", "mp4")
 AUDIO_EXT = get_env("UVR_VIDEO_EXT", "mp3")
@@ -35,9 +33,12 @@ app = FastAPI()
 
 
 class UvrInferReq(BaseModel):
-    task_id: str
-    youtube_path: str
     input_path: Path
+
+
+class UvrInferResp(BaseModel):
+    output_vocal_path: str
+    output_instrument_path: str
 
 
 @app.post("/api/v1/uvr/infer", tags=["Infer"], response_class=JSONResponse)
@@ -45,24 +46,20 @@ async def uvr_infer(req: UvrInferReq) -> JSONResponse:
     print(f"received request: {req}")
 
     try:
-        if req.youtube_path is None:
-            separator.separate(req.input_path)
-
-        yt = YouTube(req.youtube_path)
-        yt = yt.streams.filter(progressive=True, file_extension=VIDEO_EXT).order_by('resolution').last()
-        if yt is None:
-            return JSONResponse(content={"message": f"No downloadable {VIDEO_EXT} from provided URL"}, status_code=400)
-
-        file_prefix = req.task_id.replace("-", "_")
-
-        downloaded_file = yt.download(output_path=DOWNLOAD_PATH, filename=f"{file_prefix}.{VIDEO_EXT}")
-
-        audio_file_path = f"{DOWNLOAD_PATH}/{file_prefix}.{AUDIO_EXT}"
-        VideoFileClip(downloaded_file).audio.write_audiofile(audio_file_path)
+        audio_file_path = req.input_path.name
+        if audio_file_path.endswith(VIDEO_EXT):
+            audio_file_path = audio_file_path.replace(VIDEO_EXT, AUDIO_EXT)
+            VideoFileClip(req.input_path).audio.write_audiofile(audio_file_path)
 
         processed_files = separator.separate(audio_file_path)
+        if len(processed_files) != 2:
+            raise ValueError("process audio failed")
 
-        return JSONResponse(content={"message": "Created", "file": f"{processed_files[0]}"}, status_code=201)
+        resp = UvrInferResp(
+            output_vocal_path=os.path.join(f"{PROCESSED_PATH}_(Vocals)_{MODEL_PATH}.{AUDIO_EXT}"),
+            output_instrument_path=os.path.join(f"{PROCESSED_PATH}_(Instrumental)_{MODEL_PATH}.{AUDIO_EXT}"),
+        )
+        return JSONResponse(content=resp, status_code=201)
     except Exception as e:
         return JSONResponse(content={"message": f"UVR error {e}"}, status_code=500)
 
