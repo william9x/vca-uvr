@@ -54,11 +54,9 @@ async def uvr_infer(req: UvrInferReq) -> JSONResponse:
         if len(processed_files) != 2:
             raise ValueError("process audio failed")
 
-        resp = UvrInferResp(
-            output_vocal_path=os.path.join(f"{PROCESSED_PATH}_(Vocals)_{MODEL_PATH}{AUDIO_EXT}"),
-            output_instrument_path=os.path.join(f"{PROCESSED_PATH}_(Instrumental)_{MODEL_PATH}{AUDIO_EXT}"),
-        )
-        return JSONResponse(content={"output_vocal_path": resp.output_vocal_path, "output_instrument_path": resp.output_instrument_path}, status_code=201)
+        return JSONResponse(
+            content={"output_vocal_path": processed_files[0], "output_instrument_path": processed_files[1]},
+            status_code=201)
     except Exception as e:
         logger.error(e)
         return JSONResponse(content={"message": f"UVR error {e}"}, status_code=500)
