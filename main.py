@@ -25,7 +25,7 @@ separator = Separator(
     model_file_dir="models",
     output_dir=PROCESSED_PATH,
     output_format="mp3",
-    mdx_params={"hop_length": 1024, "segment_size": 512, "overlap": 0.5, "batch_size": 24, "enable_denoise": True},
+    mdx_params={"hop_length": 1024, "segment_size": 512, "overlap": 0.25, "batch_size": 24, "enable_denoise": False},
 )
 separator.load_model(MODEL_PATH)
 app = FastAPI()
