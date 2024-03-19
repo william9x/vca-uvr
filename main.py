@@ -17,8 +17,8 @@ def get_env(key, default_val=None):
 
 PROCESSED_PATH = get_env("UVR_PROCESSED_PATH", "audio/save_uvr")
 MODEL_PATH = get_env("UVR_MODEL_PATH", "Kim_Vocal_2.onnx")
-VIDEO_EXT = get_env("UVR_VIDEO_EXT", "mp4")
-AUDIO_EXT = get_env("UVR_VIDEO_EXT", "mp3")
+VIDEO_EXT = get_env("UVR_VIDEO_EXT", ".mp4")
+AUDIO_EXT = get_env("UVR_VIDEO_EXT", ".mp3")
 
 logger = logging.getLogger(__name__)
 
@@ -46,9 +46,9 @@ async def uvr_infer(req: UvrInferReq) -> JSONResponse:
     print(f"received request: {req}")
 
     try:
-        audio_file_path = req.input_path.name
-        if audio_file_path.endswith(VIDEO_EXT):
-            audio_file_path = audio_file_path.replace(VIDEO_EXT, AUDIO_EXT)
+        audio_file_path = req.input_path
+        if audio_file_path.suffix == VIDEO_EXT:
+            audio_file_path = audio_file_path.with_suffix(AUDIO_EXT)
             VideoFileClip(req.input_path).audio.write_audiofile(audio_file_path)
 
         processed_files = separator.separate(audio_file_path)
@@ -61,6 +61,7 @@ async def uvr_infer(req: UvrInferReq) -> JSONResponse:
         )
         return JSONResponse(content=resp, status_code=201)
     except Exception as e:
+        logger.error(e)
         return JSONResponse(content={"message": f"UVR error {e}"}, status_code=500)
 
 
