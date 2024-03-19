@@ -36,8 +36,8 @@ class UvrInferReq(BaseModel):
 
 
 class UvrInferResp(BaseModel):
-    output_vocal_path: str
-    output_instrument_path: str
+    out_vocal: str
+    out_instr: str
 
 
 @app.post("/api/v1/uvr/infer", tags=["Infer"], response_class=JSONResponse)
@@ -54,8 +54,13 @@ async def uvr_infer(req: UvrInferReq) -> JSONResponse:
         if len(processed_files) != 2:
             raise ValueError("process audio failed")
 
+        resp = UvrInferResp(
+            output_instrument_path=f"{PROCESSED_PATH}{processed_files[0]}",
+            output_vocal_path=f"{PROCESSED_PATH}{processed_files[1]}"
+        )
+
         return JSONResponse(
-            content={"output_instrument_path": processed_files[0], "output_vocal_path": processed_files[1]},
+            content={"output_vocal_path": resp.out_vocal, "output_instrument_path": resp.out_instr},
             status_code=201)
     except Exception as e:
         logger.error(e)
