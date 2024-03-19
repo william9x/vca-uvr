@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 separator = Separator(
     model_file_dir="models",
     output_dir=PROCESSED_PATH,
-    output_format=AUDIO_EXT,
+    output_format="mp3",
     mdx_params={"hop_length": 1024, "segment_size": 256, "overlap": 0.25, "batch_size": 24, "enable_denoise": True},
 )
 separator.load_model(MODEL_PATH)
@@ -56,8 +56,8 @@ async def uvr_infer(req: UvrInferReq) -> JSONResponse:
             raise ValueError("process audio failed")
 
         resp = UvrInferResp(
-            output_vocal_path=os.path.join(f"{PROCESSED_PATH}_(Vocals)_{MODEL_PATH}.{AUDIO_EXT}"),
-            output_instrument_path=os.path.join(f"{PROCESSED_PATH}_(Instrumental)_{MODEL_PATH}.{AUDIO_EXT}"),
+            output_vocal_path=os.path.join(f"{PROCESSED_PATH}_(Vocals)_{MODEL_PATH}{AUDIO_EXT}"),
+            output_instrument_path=os.path.join(f"{PROCESSED_PATH}_(Instrumental)_{MODEL_PATH}{AUDIO_EXT}"),
         )
         return JSONResponse(content=resp, status_code=201)
     except Exception as e:
