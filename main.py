@@ -55,7 +55,7 @@ async def uvr_infer(req: UvrInferReq) -> JSONResponse:
             raise ValueError("process audio failed")
 
         return JSONResponse(
-            content={"output_vocal_path": processed_files[0], "output_instrument_path": processed_files[1]},
+            content={"output_instrument_path": processed_files[0], "output_vocal_path": processed_files[1]},
             status_code=201)
     except Exception as e:
         logger.error(e)
