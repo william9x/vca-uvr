@@ -33,7 +33,7 @@ app = FastAPI()
 
 
 class UvrInferReq(BaseModel):
-    input_path: Path
+    input_path: str
 
 
 class UvrInferResp(BaseModel):
@@ -47,9 +47,9 @@ async def uvr_infer(req: UvrInferReq) -> JSONResponse:
 
     try:
         audio_file_path = req.input_path
-        if audio_file_path.suffix == VIDEO_EXT:
-            audio_file_path = audio_file_path.with_suffix(AUDIO_EXT)
-            VideoFileClip(req.input_path.absolute()).audio.write_audiofile(audio_file_path.absolute())
+        if audio_file_path.endswith(VIDEO_EXT):
+            audio_file_path = audio_file_path.replace(VIDEO_EXT, AUDIO_EXT)
+            VideoFileClip(req.input_path).audio.write_audiofile(audio_file_path)
 
         processed_files = separator.separate(audio_file_path)
         if len(processed_files) != 2:
